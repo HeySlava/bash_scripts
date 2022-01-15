@@ -1,0 +1,21 @@
+#!/bin/bash
+
+ffmpeg_process=$(ps -aux | grep xrectsel | wc -l)
+
+if [ $ffmpeg_process -eq 1 ]
+then
+    size=$(xrectsel)
+    PATH_TO_RECORD=$HOME"/Videos/"
+    NAME=$PATH_TO_RECORD"gif-"$(date +%s)".mp4"
+    echo $NAME
+
+    var1=$(echo $size | awk -Fx '{print $1}')
+    var2=$(echo $size | awk -Fx '{print $2}' | awk -F+ '{print $1}')
+    var3=$(echo $size | awk -Fx '{print $2}' | awk -F+ '{print $2}')
+    var4=$(echo $size | awk -Fx '{print $2}' | awk -F+ '{print $3}')
+
+    ffmpeg -nostats -loglevel 0 -video_size $var1'x'$var2 -framerate 25 -f x11grab -i :0.0+$var3,$var4 $NAME
+else
+    killall ffmpeg
+    killall xrectsel
+fi
