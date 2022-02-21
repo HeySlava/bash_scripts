@@ -1,13 +1,14 @@
 #!/bin/bash
 
-ffmpeg_process=$(ps -aux | grep xrectsel | wc -l)
+TMP_FILE="/tmp/custom_gif_tmp"
+PATH_TO_RECORD=$HOME"/Videos/"
+NAME=$PATH_TO_RECORD"gif-"$(date +%s)".mp4"
 
-if [ $ffmpeg_process -eq 1 ]
+
+if [ ! -f $TMP_FILE ]
 then
+    touch $TMP_FILE
     size=$(xrectsel)
-    PATH_TO_RECORD=$HOME"/Videos/"
-    NAME=$PATH_TO_RECORD"gif-"$(date +%s)".mp4"
-    echo $NAME
 
     var1=$(echo $size | awk -Fx '{print $1}')
     var2=$(echo $size | awk -Fx '{print $2}' | awk -F+ '{print $1}')
@@ -16,6 +17,6 @@ then
 
     ffmpeg -nostats -loglevel 0 -video_size $var1'x'$var2 -framerate 25 -f x11grab -i :0.0+$var3,$var4 $NAME
 else
+    rm $TMP_FILE
     killall ffmpeg
-    killall xrectsel
 fi
