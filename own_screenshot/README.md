@@ -2,7 +2,8 @@
 
 Enter to the directory with your project and execute the following commands:
 ``` bash
-pwd > ~<directory with scripts>/own_screenshot.config
+cd
+pwd > ~/<directory with this script>/own_screenshot.config
 ```
 
 #### Example
