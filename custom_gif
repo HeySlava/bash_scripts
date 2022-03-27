@@ -4,6 +4,8 @@ TMP_FILE="/tmp/custom_gif_tmp"
 PATH_TO_RECORD=$HOME"/Videos/"
 NAME=$PATH_TO_RECORD"gif-"$(date +%s)".mp4"
 
+mkdir -p $PATH_TO_RECORD
+
 
 if [ ! -f $TMP_FILE ]
 then
