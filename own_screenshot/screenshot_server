@@ -5,6 +5,7 @@ import hashlib
 import os
 import shlex
 import subprocess
+import time
 
 from datetime import datetime
 from pathlib import Path
@@ -18,9 +19,8 @@ hashed_filename = hashlib.sha256(tmp_filename.encode()).hexdigest()[:15]
 final_filename = IMG_DIR / (hashed_filename + ".png")
 to_clipboard = f"https://kapitonov.tech/img/{hashed_filename}.png"
 
-subprocess.run(
-        shlex.split(f"gnome-screenshot --area --file={final_filename}"),
-        text=True, capture_output=True)
+p1 = subprocess.run(shlex.split(f"maim -s {final_filename}"),
+        capture_output=True)
 subprocess.run(shlex.split(f'scp {final_filename} kapitonov:~/.img-bak'))
 
 os.system(f'echo -n {to_clipboard} | xclip -i -selection clipboard')
