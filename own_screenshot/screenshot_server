@@ -1,11 +1,10 @@
 #!/usr/bin/python
 
-
+import argparse
 import hashlib
 import os
 import shlex
 import subprocess
-import time
 
 from datetime import datetime
 from pathlib import Path
@@ -13,14 +12,45 @@ from pathlib import Path
 IMG_SALT = os.environ['IMG_SALT']
 IMG_DIR = Path(os.environ['HOME']) / '.img-bak'
 IMG_DIR.mkdir(parents=True, exist_ok=True)
+EXTENTION = '.png'
+IMG_BASE = 'https://kapitonov.tech/img/'
+BACKUP_IMAGE_PATH = 'kapitonov:~/.img-bak'
 
-tmp_filename = IMG_SALT + datetime.now().strftime("%s")
-hashed_filename = hashlib.sha256(tmp_filename.encode()).hexdigest()[:15]
-final_filename = IMG_DIR / (hashed_filename + ".png")
-to_clipboard = f"https://kapitonov.tech/img/{hashed_filename}.png"
 
-p1 = subprocess.run(shlex.split(f"maim -s {final_filename}"),
-        capture_output=True)
-subprocess.run(shlex.split(f'scp {final_filename} kapitonov:~/.img-bak'))
+def build_hashed_filename() -> str:
+    tmp_filename = IMG_SALT + datetime.now().strftime('%s')
+    return hashlib.sha256(tmp_filename.encode()).hexdigest()[:15]
 
-os.system(f'echo -n {to_clipboard} | xclip -i -selection clipboard')
+
+def _get_img_path(filename: str) -> Path:
+    final_filename = IMG_DIR / (filename + EXTENTION)
+    return final_filename
+
+
+def _to_clipboard(filename: str, extention: str = EXTENTION,
+                  link_base: str = IMG_BASE) -> None:
+    filename_to_clipboard = link_base + filename + extention
+    os.system(f'echo -n {filename_to_clipboard} |'
+              f'xclip -i -selection clipboard')
+
+
+def make_screenshot(filename: str) -> None:
+    image_path = _get_img_path(filename)
+    subprocess.run(shlex.split(f'maim -s {image_path}'))
+    subprocess.run(shlex.split(f'scp {image_path} {BACKUP_IMAGE_PATH}'))
+    _to_clipboard(filename=filename)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--name', help='Input custom filename. '
+                                       'Default value: hash')
+    args = parser.parse_args()
+    if args.name:
+        filename = args.name
+    filename = build_hashed_filename()
+    make_screenshot(filename=filename)
+
+
+if __name__ == '__main__':
+    main()
