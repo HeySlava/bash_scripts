@@ -34,6 +34,7 @@ def _to_clipboard(
         link_base: str = IMG_BASE,
 ) -> None:
     filename_to_clipboard = link_base + filename + extention
+    # TODO: use subprocess instead
     os.system(f'echo -n {filename_to_clipboard} |'
               f'xclip -i -selection clipboard')
 
