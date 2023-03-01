@@ -14,8 +14,13 @@ then
     slop=$(slop -f "%x %y %w %h %g %i") || exit 1
     read -r X Y W H G ID < <(echo $slop)
 
-    ffmpeg -rtbufsize 100M -nostats -loglevel 0 -video_size "$W"x"$H" \
-        -f x11grab -r 15 \
+    ffmpeg \
+        -rtbufsize 100M \
+        -nostats \
+        -loglevel 0 \
+        -video_size "$W"x"$H" \
+        -f x11grab \
+        -r 60 \
         -i :0.0+$X,$Y $NAME
 
 else
