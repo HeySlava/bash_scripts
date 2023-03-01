@@ -11,7 +11,7 @@ from random import random
 from pathlib import Path
 
 IMG_SALT = str(random())
-IMG_DIR = Path(os.environ['HOME']) / '.img-bak'
+IMG_DIR = Path.home() / '.img-bak'
 IMG_DIR.mkdir(parents=True, exist_ok=True)
 EXTENTION = '.png'
 IMG_BASE = 'https://kapitonov.tech/img/'
@@ -28,8 +28,11 @@ def _get_img_path(filename: str) -> Path:
     return final_filename
 
 
-def _to_clipboard(filename: str, extention: str = EXTENTION,
-                  link_base: str = IMG_BASE) -> None:
+def _to_clipboard(
+        filename: str,
+        extention: str = EXTENTION,
+        link_base: str = IMG_BASE,
+) -> None:
     filename_to_clipboard = link_base + filename + extention
     os.system(f'echo -n {filename_to_clipboard} |'
               f'xclip -i -selection clipboard')
@@ -42,16 +45,23 @@ def make_screenshot(filename: str) -> None:
     _to_clipboard(filename=filename)
 
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--name', help='Input custom filename. '
-                                       'Default value: hash')
+    parser.add_argument(
+            'name',
+            nargs='?',
+            metavar='NAME',
+            help='Type your filename without extention. Default sha256',
+        )
+
     args = parser.parse_args()
+
     if args.name:
         filename = args.name
     else:
         filename = build_hashed_filename()
     make_screenshot(filename=filename)
+    return 0
 
 
 if __name__ == '__main__':
