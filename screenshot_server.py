@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import argparse
 import hashlib
@@ -13,7 +13,7 @@ from pathlib import Path
 IMG_SALT = str(random())
 IMG_DIR = Path.home() / '.img-bak'
 IMG_DIR.mkdir(parents=True, exist_ok=True)
-EXTENTION = '.png'
+EXTENSION = '.png'
 IMG_BASE = 'https://kapitonov.tech/img/'
 BACKUP_IMAGE_PATH = 'kapitonov:~/Public/img'
 
@@ -23,17 +23,17 @@ def build_hashed_filename() -> str:
     return hashlib.sha256(tmp_filename.encode()).hexdigest()[:15]
 
 
-def _get_img_path(filename: str) -> Path:
-    final_filename = IMG_DIR / (filename + EXTENTION)
+def _get_img_path(filename: str, extension: str = EXTENSION) -> Path:
+    final_filename = IMG_DIR / (filename + extension)
     return final_filename
 
 
 def _to_clipboard(
         filename: str,
-        extention: str = EXTENTION,
+        extension: str = EXTENSION,
         link_base: str = IMG_BASE,
 ) -> None:
-    filename_to_clipboard = link_base + filename + extention
+    filename_to_clipboard = f"{link_base}{filename}{extension}"
     # TODO: use subprocess instead
     os.system(f'echo -n {filename_to_clipboard} |'
               f'xclip -i -selection clipboard')
@@ -52,7 +52,7 @@ def main() -> int:
             'name',
             nargs='?',
             metavar='NAME',
-            help='Type your filename without extention. Default sha256',
+            help='Type your filename without extension. Default sha256',
         )
 
     args = parser.parse_args()
