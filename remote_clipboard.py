@@ -15,7 +15,7 @@ if not _PASSWORD:
 
 def write(
         password: str = _PASSWORD,
-) -> Dict[str, str]:
+) -> None:
     p = subprocess.Popen(
             ['xclip', '-selection', 'clipboard', '-o'],
             stdout=subprocess.PIPE,
@@ -24,22 +24,26 @@ def write(
     message, _ = p.communicate()
     url = HOST + ':' + PORT + '/clipboard/write'
     params = {'password': password, 'message': message}
-    return requests.get(url=url, params=params).json()
+    print(requests.get(url=url, params=params).json())
 
 
 def read(
         password: str = _PASSWORD,
-) -> str:
-    p = subprocess.Popen(
-            ['xclip', '-selection', 'clipboard', '-o'],
-            stdin=subprocess.PIPE,
-        )
-
+) -> None:
     url = HOST + ':' + PORT + '/clipboard/read'
     params = {'password': password,}
-    message = requests.get(url=url, params=params).content
+    response = requests.get(url=url, params=params)
+    message = response.text
+    print(response.status_code)
+
+    subprocess.run(['xclip', '-selection', 'clipboard', '-i', '/dev/null'])
+
+    p = subprocess.Popen(
+            ['xclip', '-selection', 'clipboard', '-in'],
+            stdin=subprocess.PIPE,
+            text=True,
+        )
     p.communicate(input=message)
-    return message.decode('utf-8')
 
 
 def main():
