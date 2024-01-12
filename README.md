@@ -1,6 +1,6 @@
 # create_venv.sh
 
-`create_venv.sh` is a simple shell script that creates a Python virtual environment and installs packages from a requirements file. 
+`create_venv.sh` is a simple shell script that creates a Python virtual environment and installs packages from a requirements file.
 
 ## Usage
 

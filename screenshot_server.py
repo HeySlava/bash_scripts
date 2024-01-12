@@ -1,14 +1,12 @@
 #!/usr/bin/env python
-
 import argparse
 import hashlib
 import os
 import shlex
 import subprocess
-
 from datetime import datetime
-from random import random
 from pathlib import Path
+from random import random
 
 IMG_SALT = str(random())
 IMG_DIR = Path.home() / '.img-bak'
@@ -33,7 +31,7 @@ def _to_clipboard(
         extension: str = EXTENSION,
         link_base: str = IMG_BASE,
 ) -> None:
-    filename_to_clipboard = f"{link_base}{filename}{extension}"
+    filename_to_clipboard = f'{link_base}{filename}{extension}'
     # TODO: use subprocess instead
     os.system(f'echo -n {filename_to_clipboard} |'
               f'xclip -i -selection clipboard')
