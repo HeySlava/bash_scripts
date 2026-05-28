@@ -1,29 +1,94 @@
 #!/bin/bash
 
-TMP_FILE="/tmp/custom_gif_tmp"
-PATH_TO_RECORD=$HOME"/Videos/"
-NAME=$PATH_TO_RECORD"gif-"$(date +%s)".mp4"
+# Configuration
+RECORDINGS_DIR="$HOME/Videos"
+PID_FILE="/tmp/screen_record.pid"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+OUTPUT_FILE="$RECORDINGS_DIR/recording_$TIMESTAMP.mp4"
 
-mkdir -p $PATH_TO_RECORD
+# Ensure recordings directory exists
+mkdir -p "$RECORDINGS_DIR"
 
+# Function to send notifications (optional)
+notify() {
+    if command -v notify-send >/dev/null; then
+        notify-send "Screen Record" "$1"
+    fi
+}
 
-if [ ! -f $TMP_FILE ]
-then
-    touch $TMP_FILE
+# Stop recording if it's already running
+if [ -f "$PID_FILE" ]; then
+    PID=$(cat "$PID_FILE")
+    if ps -p "$PID" > /dev/null; then
+        # Send SIGINT to ffmpeg to let it finish the file properly
+        kill -INT "$PID"
 
-    slop=$(slop -f "%x %y %w %h %g %i") || exit 1
-    read -r X Y W H G ID < <(echo $slop)
+        # Wait a bit for ffmpeg to finish writing the file
+        sleep 1
 
-    ffmpeg \
-        -rtbufsize 100M \
-        -nostats \
-        -loglevel 0 \
-        -video_size "$W"x"$H" \
-        -f x11grab \
-        -r 60 \
-        -i :0.0+$X,$Y $NAME
+        # Get the filename from the PID's command line if possible, or use the last one
+        # For simplicity, we'll store the filename in a temp file or just use the one from the script logic
+        # Actually, let's just make sure we have the OUTPUT_FILE variable available or stored.
+        # I will modify the script to save the current output path to a temp file.
 
-else
-    rm $TMP_FILE
-    killall ffmpeg
+        OUTPUT_PATH=$(cat /tmp/screen_record_path)
+
+        if [ -f "$OUTPUT_PATH" ]; then
+            # Copy to clipboard as a file URI (works for Telegram and most file managers)
+            echo -n "file://$OUTPUT_PATH" | xclip -selection clipboard -t text/uri-list
+            notify "Recording saved and copied to clipboard!"
+        else
+            notify "Recording stopped."
+        fi
+
+        rm "$PID_FILE"
+        rm /tmp/screen_record_path
+        exit 0
+    else
+        # PID file exists but process is gone
+        rm "$PID_FILE"
+    fi
 fi
+
+# Check dependencies
+if ! command -v slop >/dev/null; then
+    notify "Error: 'slop' is not installed. Install it with: sudo apt install slop"
+    exit 1
+fi
+
+if ! command -v ffmpeg >/dev/null; then
+    notify "Error: 'ffmpeg' is not installed."
+    exit 1
+fi
+
+# Select area using slop
+# We force dimensions to be even because libx264/yuv420p requires it
+AREA=$(slop -f "%x %y %w %h") || exit 1
+read -r X Y W H <<< "$AREA"
+
+# Normalize width and height to be even (ffmpeg requirement for yuv420p)
+W=$((W / 2 * 2))
+H=$((H / 2 * 2))
+
+notify "Recording started..."
+
+# Start recording with optimized settings for Telegram/Web
+# -vcodec libx264: H.264 codec
+# -pix_fmt yuv420p: Mandatory for mobile/telegram compatibility
+# -crf 23: Good balance between quality and size
+# -preset veryfast: Faster encoding to reduce CPU load during recording
+# -movflags +faststart: Moves metadata to front so it plays instantly
+ffmpeg -f x11grab \
+    -video_size "${W}x${H}" \
+    -i ":0.0+${X},${Y}" \
+    -vcodec libx264 \
+    -pix_fmt yuv420p \
+    -crf 23 \
+    -preset veryfast \
+    -movflags +faststart \
+    -loglevel warning \
+    "$OUTPUT_FILE" &
+
+# Save the PID and the output path
+echo $! > "$PID_FILE"
+echo "$OUTPUT_FILE" > /tmp/screen_record_path
